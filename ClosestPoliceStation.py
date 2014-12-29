@@ -38,10 +38,10 @@ def ComputeManhattanDistance(position, policeStations):
     return np.min(np.sum(np.absolute(policeStations - position), axis=1))
 
 def main():
-    ps = LoadPoliceStations("../data/Police_Stations.csv")
-    cps = ComputeClosestPoliceStations("../data/Crimes_September_2014.csv", ps)
+    ps = LoadPoliceStations("data/Police_Stations.csv")
+    cps = ComputeClosestPoliceStations("data/Crimes_September_2014.csv", ps)
     df = pd.DataFrame(cps)
-    df.to_csv("../data/Crimes_September_2014_Euclidian_Manhattan.csv", header = ["ID", "Date", "Block", "Primary Type", "Description", "Location Description", "Arrest", "Domestic", "District", "Latitude", "Longitude", "Euclidian", "Manhattan"])
+    df.to_csv("data/Crimes_September_2014_Euclidian_Manhattan.csv", header = ["ID", "Date", "Block", "Primary Type", "Description", "Location Description", "Arrest", "Domestic", "District", "Latitude", "Longitude", "Euclidian", "Manhattan"])
 
 if __name__ == "__main__":
     main()
