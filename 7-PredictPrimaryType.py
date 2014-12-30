@@ -72,8 +72,8 @@ def loadDataset(csv_file):
     day_column = date2weekDay(date)
 
     # select only 3, 2 and 5 column
-    # Primary Type, Block, Location Description
-    s_dataset = np_dataset[:, [3, 2, 5]]
+    # Primary Type, Block, Location Description, Description
+    s_dataset = np_dataset[:, [3, 2, 5, 4]]
 
     # add day of week
     return np.hstack((s_dataset, day_column))
@@ -86,18 +86,21 @@ def relabel(column):
 def relabelDataset(dataset):
     np_dataset = np.array(dataset)
 
-    target   = relabel(np_dataset[:, 0])
-    block    = relabel(np_dataset[:, 1])
-    location = relabel(np_dataset[:, 2])
-    day      = relabel(np_dataset[:, 3])
+    target      = relabel(np_dataset[:, 0])
+    block       = relabel(np_dataset[:, 1])
+    location    = relabel(np_dataset[:, 2])
+    description = relabel(np_dataset[:, 3])
+    day         = relabel(np_dataset[:, 4])
 
-    target   =  np.transpose(np.asmatrix(target, dtype='float'))
-    block    =  np.transpose(np.asmatrix(block, dtype='float'))
-    location =  np.transpose(np.asmatrix(location, dtype='float'))
-    day      =  np.transpose(np.asmatrix(day, dtype='float'))
+    target      =  np.transpose(np.asmatrix(target, dtype='float'))
+    block       =  np.transpose(np.asmatrix(block, dtype='float'))
+    location    =  np.transpose(np.asmatrix(location, dtype='float'))
+    description =  np.transpose(np.asmatrix(description, dtype='float'))
+    day         =  np.transpose(np.asmatrix(day, dtype='float'))
 
-    new_dataset = np.hstack((target, block))
-    new_dataset = np.hstack((new_dataset, location))
+    #new_dataset = np.hstack((target, block))
+    new_dataset = np.hstack((target, location))
+    new_dataset = np.hstack((new_dataset, description))
     new_dataset = np.hstack((new_dataset, day))
 
     return new_dataset
@@ -112,8 +115,7 @@ def main():
     crimes = loadDataset(dataset_file)
     crimes = relabelDataset(crimes)
 
-    #X_crimes, y_crimes = crimes[:,1:], crimes[:, 0]
-    X_crimes, y_crimes = crimes[:,[2,3]], crimes[:, 0]
+    X_crimes, y_crimes = crimes[:,1:], crimes[:, 0]
     y_crimes = np.ravel(y_crimes) #return a flattened array.
 
     # number of classes in each attribute
@@ -125,7 +127,7 @@ def main():
     # create a composite estimator made by a pipeline of the standarization and the linear model
     clf = Pipeline([
         ('scaler', StandardScaler()),
-        ('ensemble', RandomForestClassifier())
+        ('ensemble', RandomForestClassifier(criterion='gini'))
         ])
 
     # create a k-fold croos validation iterator of k=5 folds
