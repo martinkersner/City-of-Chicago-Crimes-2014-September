@@ -73,7 +73,7 @@ def loadDataset(csv_file):
 
     # select only 3, 2 and 5 column
     # Primary Type, Block, Location Description, Description
-    s_dataset = np_dataset[:, [3, 2, 5, 4]]
+    s_dataset = np_dataset[:, [3, 2, 5, 4, 9, 10]]
 
     # add day of week
     return np.hstack((s_dataset, day_column))
@@ -90,20 +90,36 @@ def relabelDataset(dataset):
     block       = relabel(np_dataset[:, 1])
     location    = relabel(np_dataset[:, 2])
     description = relabel(np_dataset[:, 3])
-    day         = relabel(np_dataset[:, 4])
+    latitude    = relabel(replaceNan(np_dataset[:,4]))
+    longitude   = (replaceNan(np_dataset[:, 5]))
+    day         = relabel(np_dataset[:, 6])
 
     target      =  np.transpose(np.asmatrix(target, dtype='float'))
     block       =  np.transpose(np.asmatrix(block, dtype='float'))
     location    =  np.transpose(np.asmatrix(location, dtype='float'))
     description =  np.transpose(np.asmatrix(description, dtype='float'))
+    latitude    =  np.transpose(np.asmatrix(latitude, dtype='float'))
+    longitude   =  np.transpose(np.asmatrix(longitude, dtype='float'))
     day         =  np.transpose(np.asmatrix(day, dtype='float'))
 
     #new_dataset = np.hstack((target, block))
     new_dataset = np.hstack((target, location))
-    new_dataset = np.hstack((new_dataset, description))
+    #new_dataset = np.hstack((new_dataset, description))
+    new_dataset = np.hstack((new_dataset, latitude))
+    new_dataset = np.hstack((new_dataset, longitude))
     new_dataset = np.hstack((new_dataset, day))
 
     return new_dataset
+
+def replaceNan(column):
+    newColumn = np.zeros(column.shape)
+    for i in range(0, column.shape[0]):
+        if (ma.isnan(column[i])):
+            newColumn[i] = 0
+        else:
+            newColumn[i] = column[i]
+
+    return newColumn
 
 def main():
     if (len(sys.argv) > 1):
@@ -118,25 +134,22 @@ def main():
     X_crimes, y_crimes = crimes[:,1:], crimes[:, 0]
     y_crimes = np.ravel(y_crimes) #return a flattened array.
 
-    # number of classes in each attribute
-    #print len(set(np.ravel(crimes[:, 0])))
-    #print len(set(np.ravel(crimes[:, 1])))
-    #print len(set(np.ravel(crimes[:, 2])))
-    #print len(set(np.ravel(crimes[:, 3])))
+    for nEst in [20, 40, 80, 160]:
+        print nEst
+        # create a composite estimator made by a pipeline of the standarization and the linear model
+        clf = Pipeline([
+            ('scaler', StandardScaler()),
+            #('ensemble', RandomForestClassifier(n_estimators=nEst, criterion='gini'))
+            ('ensemble', RandomForestClassifier(n_estimators=nEst, criterion='entropy'))
+            ])
 
-    # create a composite estimator made by a pipeline of the standarization and the linear model
-    clf = Pipeline([
-        ('scaler', StandardScaler()),
-        ('ensemble', RandomForestClassifier(criterion='gini'))
-        ])
+        # create a k-fold croos validation iterator of k=5 folds
+        cv = KFold(crimes.shape[0], 5, shuffle=True, random_state=33)
 
-    # create a k-fold croos validation iterator of k=5 folds
-    cv = KFold(crimes.shape[0], 5, shuffle=True, random_state=33)
+        # by default the score used is the one returned by score method of the estimator (accuracy)
+        scores = cross_val_score(clf, X_crimes, y_crimes, cv=cv)
 
-    # by default the score used is the one returned by score method of the estimator (accuracy)
-    scores = cross_val_score(clf, X_crimes, y_crimes, cv=cv)
-
-    print mean_score(scores)
+        print mean_score(scores)
 
 if __name__ == "__main__":
     main()
